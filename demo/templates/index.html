@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+<div class="col-sm-1 col-sm-offset-2">
+  <span id="coords">Coords</span>
+</div>
+<div id="map" class="col-sm-6" style="height:480px"></div>
+<div class="col-sm-1">
+    <div id="github"><i class="fa fa-github-alt fa-3x" ></i></div>
+    <i class="fa fa-reddit fa-3x"></i>
+    <i class="fa fa-pied-piper-alt fa-3x"></i>
+</div>
+</div>
+{% endblock %}
+{% block scripts %}
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+<link rel="stylesheet" href="http://code.ionicframework.com/ionicons/1.5.2/css/ionicons.min.css">
+<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.awesome-markers.css') }}"> -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.min.css') }}">
+<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+<style type="text/css">
+   .marker-list {
+      list-style-type:none
+    }
+</style>
+<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+<!-- <script src="{{ url_for('static', filename='js/leaflet.awesome-markers.js') }}"></script> -->
+<script type="text/javascript">
+
+
+
+// create a map in the "map" div, set the view to a given place and zoom
+var map = L.map('map').setView([44.30813, 11.29395], 10);
+var idc = 0;
+
+function getId() {
+  return 'mk' + idc++;
+}
+
+function onMapClick(e) {
+    tid = getId();
+    console.log(tid);
+
+    marker = new L.marker(e.latlng, {
+      id: tid,
+      draggable: 'true'
+    });
+
+    marker.on('dragend', function(e){
+        console.log(this.getLatLng());
+        var position = e.target.getLatLng().toString();
+        this.bindPopup(position).openPopup();
+    });
+
+    map.addLayer(marker);
+};
+
+map.on('dblclick', onMapClick);
+
+// add an OpenStreetMap tile layer
+L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
+
+// add a marker in the given location, attach some popup content to it and open the popup
+mark = L.marker([44.30813, 11.29395],
+         {draggable: true}).addTo(map)
+    .bindPopup('A pretty CSS3 popup. <br> Easily customizable.')
+    .openPopup();
+
+mark.on('drag', function(e) {
+    $('#coords').text(e.target.getLatLng());
+})
+
+$( "#github" ).draggable();
+
+</script>
+{% endblock %}
