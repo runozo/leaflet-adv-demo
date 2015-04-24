@@ -1,78 +1,120 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row">
-<div class="col-sm-1 col-sm-offset-2">
-  <span id="coords">Coords</span>
-</div>
-<div id="map" class="col-sm-6" style="height:480px"></div>
-<div class="col-sm-1">
-    <div id="github"><i class="fa fa-github-alt fa-3x" ></i></div>
-    <i class="fa fa-reddit fa-3x"></i>
-    <i class="fa fa-pied-piper-alt fa-3x"></i>
-</div>
-</div>
+      <div class="row">
+      <div class="col-sm-1 col-sm-offset-2">
+        <span id="coords">Coords</span>
+      </div>
+      <div id="map" class="col-sm-6" style="height:480px"></div>
+      <div class="col-sm-3 text-left">
+          <input type="checkbox" value="Openstreet Maps" checked="checked" onclick="(this.checked?openstreet_maps.bringToFront():openstreet_maps.bringToBack())"> Openstreet Maps<br>
+          <input type="checkbox" value="Ortofoto AGEA" onclick="(this.checked?ortofoto_agea.bringToFront():ortofoto_agea.bringToBack())"> Ortofoto AGEA<br>
+          <input type="checkbox" value="Ortofoto AGEA IR" onclick="(this.checked?ortofoto_agea_ir.bringToFront():ortofoto_agea_ir.bringToBack())"> Ortofoto AGEA IR<br>
+          <input type="checkbox" value="Carta Tecnica Regionale" onclick="(this.checked?carta_tecnica_regionale.bringToFront():carta_tecnica_regionale.bringToBack())"> Carta Tecnica Regionale 1:5.000<br>
+      </div>
+      </div>
 {% endblock %}
 {% block scripts %}
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="http://code.ionicframework.com/ionicons/1.5.2/css/ionicons.min.css">
-<!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.awesome-markers.css') }}"> -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.min.css') }}">
-<link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
-<style type="text/css">
-   .marker-list {
-      list-style-type:none
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="http://code.ionicframework.com/ionicons/1.5.2/css/ionicons.min.css">
+    <!-- <link rel="stylesheet" href="{{ url_for('static', filename='css/leaflet.awesome-markers.css') }}"> -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/jquery-ui.min.css') }}">
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <style type="text/css">
+       .marker-list {
+          list-style-type:none
+        }
+    </style>
+    <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <!-- <script src="{{ url_for('static', filename='js/leaflet.awesome-markers.js') }}"></script> -->
+    <script type="text/javascript">
+
+
+
+    // create a map in the "map" div, set the view to a given place and zoom
+    var map = L.map('map').setView([44.30813, 11.29395], 10);
+    var idc = 0;
+
+    function getId() {
+      return 'mk' + idc++;
     }
-</style>
-<script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
-<!-- <script src="{{ url_for('static', filename='js/leaflet.awesome-markers.js') }}"></script> -->
-<script type="text/javascript">
 
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition);
+        } else {
+            console.log("Geolocation is not supported by this browser.");
+        }
+    }
 
+    function showPosition(position) {
+        map.setView([position.coords.latitude, position.coords.longitude], 13);
+            // add a marker in the given location, attach some popup content to it and open the popup
+        mark = L.marker([position.coords.latitude, position.coords.longitude],
+                 {draggable: true}).addTo(map)
+            .bindPopup('Your location')
+            .openPopup();
+    }
 
-// create a map in the "map" div, set the view to a given place and zoom
-var map = L.map('map').setView([44.30813, 11.29395], 10);
-var idc = 0;
+    function onMapClick(e) {
+        tid = getId();
+        console.log(tid);
 
-function getId() {
-  return 'mk' + idc++;
-}
+        marker = new L.marker(e.latlng, {
+          id: tid,
+          draggable: 'true'
+        });
 
-function onMapClick(e) {
-    tid = getId();
-    console.log(tid);
+        // when marker stop drag show a popup with lat & lon
+        marker.on('dragend', function(e){
+            var position = this.getLatLng().toString();
+            this.bindPopup(position).openPopup();
+        });
 
-    marker = new L.marker(e.latlng, {
-      id: tid,
-      draggable: 'true'
+        // when click edit marker
+        marker.on('dblclick', function(e){
+            var html = '<form><div class="form-group"><input type="text" placeholder="Title"/></div><div class="form-group"><button type="submit" class="btn btn-xs btn-primary">Save</button></div></form>';
+            this.bindPopup(html).openPopup();
+        });
+
+        map.addLayer(marker);
+    };
+
+    // event to add a marker
+    map.on('dblclick', onMapClick);
+
+    // OpenStreetMap tile layer
+    openstreet_maps = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     });
 
-    marker.on('dragend', function(e){
-        console.log(this.getLatLng());
-        var position = e.target.getLatLng().toString();
-        this.bindPopup(position).openPopup();
+    // Agea ortofoto tile layer
+    ortofoto_agea = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_rgb", {
+        layers: 'DBTR2013_Ctr5',
+        format: 'image/png',
+        transparent: true,
+        attribution: "Ortofoto RGB © 2011 AGEA"
     });
 
-    map.addLayer(marker);
-};
+    ortofoto_agea_ir = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_ir", {
+        layers: 'DBTR2013_Ctr5',
+        format: 'image/png',
+        transparent: true,
+        attribution: "Carta Tecnica Regionale 1:5.000 - MonoFull - DBTR 2008"
+    });
 
-map.on('dblclick', onMapClick);
+    carta_tecnica_regionale = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/dbtr2008_ctr5", {
+        layers: 'DBTR2013_Ctr5',
+        format: 'image/png',
+        transparent: true,
+        attribution: "Carta Tecnica Regionale 1:5.000 - MonoFull - DBTR 2008"
+    });
 
-// add an OpenStreetMap tile layer
-L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-}).addTo(map);
+    carta_tecnica_regionale.addTo(map);
+    ortofoto_agea.addTo(map);
+    ortofoto_agea_ir.addTo(map);
+    openstreet_maps.addTo(map);
 
-// add a marker in the given location, attach some popup content to it and open the popup
-mark = L.marker([44.30813, 11.29395],
-         {draggable: true}).addTo(map)
-    .bindPopup('A pretty CSS3 popup. <br> Easily customizable.')
-    .openPopup();
+    getLocation();
 
-mark.on('drag', function(e) {
-    $('#coords').text(e.target.getLatLng());
-})
-
-$( "#github" ).draggable();
-
-</script>
+    </script>
 {% endblock %}
