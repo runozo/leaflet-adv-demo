@@ -1,15 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
       <div class="row">
-      <div class="col-sm-1 col-sm-offset-2">
+      <div class="col-sm-2">
         <span id="coords">Coords</span>
       </div>
-      <div id="map" class="col-sm-6" style="height:480px"></div>
-      <div class="col-sm-3 text-left">
-          <input type="checkbox" value="Openstreet Maps" checked="checked" onclick="(this.checked?openstreet_maps.bringToFront():openstreet_maps.bringToBack())"> Openstreet Maps<br>
-          <input type="checkbox" value="Ortofoto AGEA" onclick="(this.checked?ortofoto_agea.bringToFront():ortofoto_agea.bringToBack())"> Ortofoto AGEA<br>
-          <input type="checkbox" value="Ortofoto AGEA IR" onclick="(this.checked?ortofoto_agea_ir.bringToFront():ortofoto_agea_ir.bringToBack())"> Ortofoto AGEA IR<br>
-          <input type="checkbox" value="Carta Tecnica Regionale" onclick="(this.checked?carta_tecnica_regionale.bringToFront():carta_tecnica_regionale.bringToBack())"> Carta Tecnica Regionale 1:5.000<br>
+      <div id="map" class="col-sm-8" style="height:480px"></div>
+      <div class="col-sm-2 text-left">
+          <input type="checkbox" value="Openstreet Maps" checked="checked" onclick="(this.checked?map.addLayer(openstreet_maps):map.removeLayer(openstreet_maps))"> Openstreet Maps<br>
+          <input type="checkbox" value="Google Maps" onclick="(this.checked?map.addLayer(google_maps):map.removeLayer(google_maps))"> Google Maps<br>
+          <input type="checkbox" value="Ortofoto AGEA" onclick="(this.checked?map.addLayer(ortofoto_agea):map.removeLayer(ortofoto_agea))"> Ortofoto AGEA 2011<br>
+          <input type="checkbox" value="Ortofoto AGEA IR" onclick="(this.checked?map.addLayer(ortofoto_agea_ir):map.removeLayer(ortofoto_agea_ir))"> Ortofoto AGEA IR 2011<br>
+          <input type="checkbox" value="Carta Tecnica Regionale" onclick="(this.checked?map.addLayer(carta_tecnica_regionale):map.removeLayer(carta_tecnica_regionale))"> Carta Tecnica Regionale 1:5.000<br>
+          <input type="checkbox" value="Bing Maps" onclick="(this.checked?map.addLayer(bing_maps):map.removeLayer(bing_maps))"> Bing<br>
       </div>
       </div>
 {% endblock %}
@@ -25,6 +27,9 @@
         }
     </style>
     <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+    <script src="http://maps.google.com/maps/api/js?v=3.2&sensor=false"></script>
+    <script src="http://matchingnotes.com/javascripts/leaflet-google.js"></script>
+    <script src="{{ url_for('static', filename='js/Bing.js') }}"></script>
     <!-- <script src="{{ url_for('static', filename='js/leaflet.awesome-markers.js') }}"></script> -->
     <script type="text/javascript">
 
@@ -83,35 +88,38 @@
     map.on('dblclick', onMapClick);
 
     // OpenStreetMap tile layer
-    openstreet_maps = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
+    var openstreet_maps = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     });
 
+    var google_maps = new L.Google('ROADMAP');
     // Agea ortofoto tile layer
-    ortofoto_agea = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_rgb", {
+    var ortofoto_agea = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_rgb", {
         layers: 'DBTR2013_Ctr5',
         format: 'image/png',
         transparent: true,
         attribution: "Ortofoto RGB © 2011 AGEA"
     });
 
-    ortofoto_agea_ir = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_ir", {
+    var ortofoto_agea_ir = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_ir", {
         layers: 'DBTR2013_Ctr5',
         format: 'image/png',
         transparent: true,
         attribution: "Carta Tecnica Regionale 1:5.000 - MonoFull - DBTR 2008"
     });
 
-    carta_tecnica_regionale = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/dbtr2008_ctr5", {
+    var carta_tecnica_regionale = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/dbtr2008_ctr5", {
         layers: 'DBTR2013_Ctr5',
         format: 'image/png',
         transparent: true,
         attribution: "Carta Tecnica Regionale 1:5.000 - MonoFull - DBTR 2008"
     });
 
-    carta_tecnica_regionale.addTo(map);
+    var bing_maps = new L.BingLayer('AvkEtrY5xBvN1RdJP9BGyieAFWosHgBipIBXeCYUnf2_DBeZaAeSHCSVQvZQbgZB');
+
+/*    carta_tecnica_regionale.addTo(map);
     ortofoto_agea.addTo(map);
-    ortofoto_agea_ir.addTo(map);
+    ortofoto_agea_ir.addTo(map);*/
     openstreet_maps.addTo(map);
 
     getLocation();
