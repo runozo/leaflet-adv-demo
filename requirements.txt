@@ -1,6 +1,2 @@
 Flask
 Flask-Script
-pymongo
-requests
-lxml
-cssselect
