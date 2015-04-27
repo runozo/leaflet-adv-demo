@@ -2,16 +2,17 @@
 {% block content %}
       <div class="row">
       <div class="col-sm-2">
-        <span id="coords">Coords</span>
+        <h4>Points on map:</h4>
       </div>
       <div id="map" class="col-sm-8" style="height:480px"></div>
       <div class="col-sm-2 text-left">
+          <h4>Map tiles</h4>
           <input type="checkbox" value="Openstreet Maps" checked="checked" onclick="(this.checked?map.addLayer(openstreet_maps):map.removeLayer(openstreet_maps))"> Openstreet Maps<br>
+          <input type="checkbox" value="Bing Maps" onclick="(this.checked?map.addLayer(bing_maps):map.removeLayer(bing_maps))"> Bing<br>
           <input type="checkbox" value="Google Maps" onclick="(this.checked?map.addLayer(google_maps):map.removeLayer(google_maps))"> Google Maps<br>
           <input type="checkbox" value="Ortofoto AGEA" onclick="(this.checked?map.addLayer(ortofoto_agea):map.removeLayer(ortofoto_agea))"> Ortofoto AGEA 2011<br>
           <input type="checkbox" value="Ortofoto AGEA IR" onclick="(this.checked?map.addLayer(ortofoto_agea_ir):map.removeLayer(ortofoto_agea_ir))"> Ortofoto AGEA IR 2011<br>
           <input type="checkbox" value="Carta Tecnica Regionale" onclick="(this.checked?map.addLayer(carta_tecnica_regionale):map.removeLayer(carta_tecnica_regionale))"> Carta Tecnica Regionale 1:5.000<br>
-          <input type="checkbox" value="Bing Maps" onclick="(this.checked?map.addLayer(bing_maps):map.removeLayer(bing_maps))"> Bing<br>
       </div>
       </div>
 {% endblock %}
@@ -33,16 +34,16 @@
     <!-- <script src="{{ url_for('static', filename='js/leaflet.awesome-markers.js') }}"></script> -->
     <script type="text/javascript">
 
-
-
     // create a map in the "map" div, set the view to a given place and zoom
     var map = L.map('map').setView([44.30813, 11.29395], 10);
     var idc = 0;
 
+    // Creates a new marker id
     function getId() {
       return 'mk' + idc++;
     }
 
+    // if possible, get actual location from browser
     function getLocation() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(showPosition);
@@ -51,9 +52,10 @@
         }
     }
 
+    // Moves the map there, then draws a marker
     function showPosition(position) {
         map.setView([position.coords.latitude, position.coords.longitude], 13);
-            // add a marker in the given location, attach some popup content to it and open the popup
+        // add a marker in the given location, attach some popup content to it and open the popup
         mark = L.marker([position.coords.latitude, position.coords.longitude],
                  {draggable: true}).addTo(map)
             .bindPopup('Your location')
@@ -61,30 +63,52 @@
     }
 
     function onMapClick(e) {
-        tid = getId();
-        console.log(tid);
-
+        // creates a new draggable marker
         marker = new L.marker(e.latlng, {
-          id: tid,
+          id: getId(),
           draggable: 'true'
         });
 
         // when marker stop drag show a popup with lat & lon
-        marker.on('dragend', function(e){
+        marker.on('dragend', function(e) {
             var position = this.getLatLng().toString();
             this.bindPopup(position).openPopup();
         });
 
         // when click edit marker
-        marker.on('dblclick', function(e){
-            var html = '<form><div class="form-group"><input type="text" placeholder="Title"/></div><div class="form-group"><button type="submit" class="btn btn-xs btn-primary">Save</button></div></form>';
-            this.bindPopup(html).openPopup();
+        marker.on('dblclick', function(e) {
+            var html = '<div class="form"><div class="form-group"><input type="hidden" name="_id" value="' + e.target.options.id + '" /><div class="err" role="alert" style="color:red;display:none">x please provide a title</div><input type="text" placeholder="Title" name="title"/></div><div class="form-group"><input type="submit" name="save" class="save btn btn-xs btn-primary" value="Save"></input>&nbsp;<button type="submit" class="btn btn-xs btn-danger">Delete</button></div></div>';
+            var marker = this;
+            marker.bindPopup(html).openPopup();
+
+            $('.save').click(function(e){
+
+              if ($("[name='title']").val() != '') {
+                $('.err').hide();
+                $.ajax({
+                  type: "POST",
+                  url: "{{ url_for('home.newmarker') }}",
+                  data: {
+                    id: $("[name='_id']").val(),
+                    title: $("[name='title']").val()
+                  },
+                  success: function() {
+                    marker.bindPopup('<div class="">Saved successfully.</div>').openPopup();
+                  }
+                });
+              } else {
+                $('.err').show();
+                marker.update()
+              }
+
+              return false;
+            });
         });
 
         map.addLayer(marker);
     };
 
-    // event to add a marker
+    // when double click on map draws a new marker
     map.on('dblclick', onMapClick);
 
     // OpenStreetMap tile layer
@@ -92,7 +116,9 @@
         attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
     });
 
+    // Google map layer
     var google_maps = new L.Google('ROADMAP');
+
     // Agea ortofoto tile layer
     var ortofoto_agea = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_rgb", {
         layers: 'DBTR2013_Ctr5',
@@ -101,6 +127,7 @@
         attribution: "Ortofoto RGB © 2011 AGEA"
     });
 
+    // Ortofoto AGEA 2011 infra-red map layer
     var ortofoto_agea_ir = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/agea2011_ir", {
         layers: 'DBTR2013_Ctr5',
         format: 'image/png',
@@ -108,6 +135,7 @@
         attribution: "Carta Tecnica Regionale 1:5.000 - MonoFull - DBTR 2008"
     });
 
+    // Carta tecnica regionale map layer
     var carta_tecnica_regionale = L.tileLayer.wms("http://servizigis.regione.emilia-romagna.it/wms/dbtr2008_ctr5", {
         layers: 'DBTR2013_Ctr5',
         format: 'image/png',
@@ -115,14 +143,23 @@
         attribution: "Carta Tecnica Regionale 1:5.000 - MonoFull - DBTR 2008"
     });
 
+    // Bing map layer
     var bing_maps = new L.BingLayer('AvkEtrY5xBvN1RdJP9BGyieAFWosHgBipIBXeCYUnf2_DBeZaAeSHCSVQvZQbgZB');
 
-/*    carta_tecnica_regionale.addTo(map);
-    ortofoto_agea.addTo(map);
-    ortofoto_agea_ir.addTo(map);*/
+    // default to openstreet map layer
     openstreet_maps.addTo(map);
 
+    // get browser location, point map there, then draw a marker
     getLocation();
 
+    // UI Part
+    function is_valid(form){
+      if (form['title'].value == "")
+        return false;
+      else
+        return true;
+    }
+
     </script>
+      }
 {% endblock %}
