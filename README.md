@@ -1,5 +1,5 @@
 # leaflet-adv-demo
-It's a demo of what can be done with a bit of leaflet.js
+It's a demo of what can be done with a bit Leaflet.js and Flask.
 
 ## Usage
 ```bash
