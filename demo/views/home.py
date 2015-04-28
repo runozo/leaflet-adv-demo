@@ -21,5 +21,5 @@ def newmarker():
     try:
         print(request.form)
         return jsonify({'message': 'ok'})
-    except Exception, e:
+    except Exception as e:
         return jsonify({'message': 'error', 'value': str(e)})
