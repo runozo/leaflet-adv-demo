@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
-# from ghiro import app
 from jinja2 import TemplateNotFound
-from flask import Blueprint, render_template, abort, current_app, request, jsonify
-from datetime import datetime
+from flask import Blueprint, render_template, abort, request, jsonify
 # from demo.database import engine
 
 mod = Blueprint('home', __name__)
