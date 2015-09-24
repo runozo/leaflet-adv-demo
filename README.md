@@ -7,7 +7,7 @@ git clone https://github.com/runozo/leaflet-adv-demo.git
 cd leaflet-adv-demo
 pyvenv env
 source env/bin/activate
-pip install requirements.txt
+pip install -r requirements.txt
 python manage.py runserver
 ```
 
