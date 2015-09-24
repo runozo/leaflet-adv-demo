@@ -1,5 +1,5 @@
 # leaflet-adv-demo
-It's a demo of what can be done with [LeafletJS](http://leafletjs.com/) and Flask.
+It's a demo of what can be done with [LeafletJS](http://leafletjs.com/) and [Flask](http://flask.pocoo.org/).
 
 ## Usage
 ```bash
